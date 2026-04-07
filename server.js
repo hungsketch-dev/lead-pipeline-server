@@ -1,4 +1,3 @@
-
 const express = require('express');
 const app = express();
 app.use(express.json());
@@ -8,6 +7,20 @@ const GHL_KEY=process.env.GHL_API_KEY;
 const GHL_LOC=process.env.GHL_LOCATION_ID;
 
 // Lusha proxy — forwards requests server-side to bypass CORS
+// Anthropic proxy — avoids CORS on hosted/Netlify pages
+app.post('/anthropic-proxy', async(req,res)=>{
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','x-api-key':process.env.ANTHROPIC_API_KEY},
+      body:JSON.stringify(req.body),
+      signal:AbortSignal.timeout(30000)
+    });
+    const json=await r.json();
+    res.status(r.status).json(json);
+  }catch(e){res.status(500).json({error:e.message});}
+});
+
 // iTunes proxy — avoids CORS on hosted pages
 app.get('/itunes-proxy', async(req,res)=>{
   const {id}=req.query;
