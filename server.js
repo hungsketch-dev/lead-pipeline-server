@@ -110,4 +110,4 @@ app.get('/li-name-proxy',async(req,res)=>{
   }catch(e){res.status(500).json({error:e.message});}
 });
 
-app.listen
+app.listen(process.env.PORT||3000,()=>console.log('Server on port',process.env.PORT||3000));
