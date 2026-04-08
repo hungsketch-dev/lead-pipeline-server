@@ -6,8 +6,6 @@ app.use((req,res,next)=>{res.setHeader('Access-Control-Allow-Origin','*');res.se
 const GHL_KEY=process.env.GHL_API_KEY;
 const GHL_LOC=process.env.GHL_LOCATION_ID;
 
-// Lusha proxy — forwards requests server-side to bypass CORS
-// Anthropic proxy — avoids CORS on hosted/Netlify pages
 app.post('/anthropic-proxy', async(req,res)=>{
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{
@@ -21,7 +19,6 @@ app.post('/anthropic-proxy', async(req,res)=>{
   }catch(e){res.status(500).json({error:e.message});}
 });
 
-// iTunes proxy — avoids CORS on hosted pages
 app.get('/itunes-proxy', async(req,res)=>{
   const {id}=req.query;
   if(!id)return res.status(400).json({error:'Missing id'});
@@ -32,7 +29,6 @@ app.get('/itunes-proxy', async(req,res)=>{
   }catch(e){res.status(500).json({error:e.message});}
 });
 
-// Lusha proxy — avoids CORS on hosted pages
 app.post('/lusha-proxy', async(req,res)=>{
   const {url,api_key}=req.body;
   if(!url||!api_key)return res.status(400).json({error:'Missing url or api_key'});
@@ -43,7 +39,6 @@ app.post('/lusha-proxy', async(req,res)=>{
   }catch(e){res.status(500).json({error:e.message});}
 });
 
-// LinkedIn webhook
 const GENERIC=new Set(['info','hello','contact','support','marketing','growth','inquiries','partnerships','press','sales','admin','help','feedback','noreply','no-reply','business','careers','hr','legal','privacy','security']);
 function classify(email){
   const prefix=(email||'').toLowerCase().split('@')[0];
@@ -73,7 +68,7 @@ app.post('/webhook/linkedin-ghl',async(req,res)=>{
     await upsert(payload);res.json({ok:true});
   }catch(e){res.status(500).json({error:e.message});}
 });
-// Generic fetch proxy for privacy policy scanning
+
 app.get('/fetch-proxy',async(req,res)=>{
   const url=req.query.url;
   if(!url)return res.status(400).json({error:'missing url'});
@@ -83,12 +78,12 @@ app.get('/fetch-proxy',async(req,res)=>{
     res.json({contents:html,status:r.status});
   }catch(e){res.status(500).json({error:e.message});}
 });
-// Gemini proxy for legal entity lookup
+
 app.post('/gemini-proxy',async(req,res)=>{
   const key=process.env.GEMINI_API_KEY;
   if(!key)return res.status(500).json({error:'GEMINI_API_KEY not set'});
   try{
-    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+key,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(req.body),
@@ -98,8 +93,9 @@ app.post('/gemini-proxy',async(req,res)=>{
     res.json(j);
   }catch(e){res.status(500).json({error:e.message});}
 });
+
 app.get('/health',(_, res)=>res.json({ok:true,ts:new Date().toISOString()}));
-// LinkedIn name proxy — fetches page title to extract person name
+
 app.get('/li-name-proxy',async(req,res)=>{
   const url=req.query.url;
   if(!url)return res.status(400).json({error:'missing url'});
@@ -113,4 +109,5 @@ app.get('/li-name-proxy',async(req,res)=>{
     res.json({firstName:parts[0]||'',lastName:parts.slice(1).join(' ')||'',raw});
   }catch(e){res.status(500).json({error:e.message});}
 });
+
 app.listen(process.env.PORT||3000,()=>console.log('Server on port',process.env.PORT||3000));
