@@ -83,6 +83,21 @@ app.get('/fetch-proxy',async(req,res)=>{
     res.json({contents:html,status:r.status});
   }catch(e){res.status(500).json({error:e.message});}
 });
+// Gemini proxy for legal entity lookup
+app.post('/gemini-proxy',async(req,res)=>{
+  const key=process.env.GEMINI_API_KEY;
+  if(!key)return res.status(500).json({error:'GEMINI_API_KEY not set'});
+  try{
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(req.body),
+      signal:AbortSignal.timeout(10000)
+    });
+    const j=await r.json();
+    res.json(j);
+  }catch(e){res.status(500).json({error:e.message});}
+});
 app.get('/health',(_, res)=>res.json({ok:true,ts:new Date().toISOString()}));
 // LinkedIn name proxy — fetches page title to extract person name
 app.get('/li-name-proxy',async(req,res)=>{
