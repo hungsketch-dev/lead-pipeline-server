@@ -14,7 +14,7 @@ app.post('/anthropic-proxy', async(req,res)=>{
       method:'POST',
       headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','x-api-key':process.env.ANTHROPIC_API_KEY},
       body:JSON.stringify(req.body),
-      signal:AbortSignal.timeout(30000)
+      signal:AbortSignal.timeout(60000)
     });
     const json=await r.json();
     res.status(r.status).json(json);
@@ -74,4 +74,18 @@ app.post('/webhook/linkedin-ghl',async(req,res)=>{
   }catch(e){res.status(500).json({error:e.message});}
 });
 app.get('/health',(_, res)=>res.json({ok:true,ts:new Date().toISOString()}));
+// LinkedIn name proxy — fetches page title to extract person name
+app.get('/li-name-proxy',async(req,res)=>{
+  const url=req.query.url;
+  if(!url)return res.status(400).json({error:'missing url'});
+  try{
+    const r=await fetch(url,{headers:{'User-Agent':'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'},signal:AbortSignal.timeout(8000)});
+    const html=await r.text();
+    const og=html.match(/property=["']og:title["'] content=["']([^"']+)["']/i);
+    const ti=html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const raw=(og?.[1]||ti?.[1]||'').replace(/&#x27;/g,"'").replace(/&amp;/g,'&').replace(/\s*[|\-].*LinkedIn.*/i,'').trim();
+    const parts=raw.split(' ').filter(Boolean);
+    res.json({firstName:parts[0]||'',lastName:parts.slice(1).join(' ')||'',raw});
+  }catch(e){res.status(500).json({error:e.message});}
+});
 app.listen(process.env.PORT||3000,()=>console.log('Server on port',process.env.PORT||3000));
