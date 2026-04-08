@@ -73,6 +73,16 @@ app.post('/webhook/linkedin-ghl',async(req,res)=>{
     await upsert(payload);res.json({ok:true});
   }catch(e){res.status(500).json({error:e.message});}
 });
+// Generic fetch proxy for privacy policy scanning
+app.get('/fetch-proxy',async(req,res)=>{
+  const url=req.query.url;
+  if(!url)return res.status(400).json({error:'missing url'});
+  try{
+    const r=await fetch(url,{headers:{'User-Agent':'Mozilla/5.0 (compatible; Googlebot/2.1)','Accept':'text/html'},signal:AbortSignal.timeout(8000)});
+    const html=await r.text();
+    res.json({contents:html,status:r.status});
+  }catch(e){res.status(500).json({error:e.message});}
+});
 app.get('/health',(_, res)=>res.json({ok:true,ts:new Date().toISOString()}));
 // LinkedIn name proxy — fetches page title to extract person name
 app.get('/li-name-proxy',async(req,res)=>{
