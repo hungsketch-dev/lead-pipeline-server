@@ -83,7 +83,7 @@ app.post('/gemini-proxy',async(req,res)=>{
   const key=process.env.GEMINI_API_KEY;
   if(!key)return res.status(500).json({error:'GEMINI_API_KEY not set'});
   try{
-    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{
+    const r=await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key='+key,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(req.body),
