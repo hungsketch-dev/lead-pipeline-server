@@ -41,8 +41,9 @@ app.get('/fetch-proxy', async (req, res) => {
 app.get('/lusha-proxy', async (req, res) => {
   try {
     const { path, api_key, ...params } = req.query;
-    const qs = new URLSearchParams({ ...params, api_key }).toString();
-    const r = await fetch('https://api.lusha.com' + path + '?' + qs, {
+    // api_key goes in header only — Lusha v2 rejects it as a query param
+    const qs = new URLSearchParams(params).toString();
+    const r = await fetch('https://api.lusha.com' + path + (qs ? '?' + qs : ''), {
       headers: { 'api_key': api_key, 'Accept': 'application/json' }
     });
     const j = await r.json();
